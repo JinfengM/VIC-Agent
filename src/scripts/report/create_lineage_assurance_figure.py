@@ -13,7 +13,7 @@ import pandas as pd
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def file_sha256(path):

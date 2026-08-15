@@ -25,7 +25,42 @@ Linux x86-64 MPI-VIC runtime and a locally reconstructed baseline run named
 `runs/<run_id>/`; publication graphics and their compact evidence records are
 written to `report_assets/figures/`.
 
-### Bundled MPI-VIC runtime
+## Data availability and repository contents
+
+The repository contains 52 input files (approximately 23 MB). Every committed
+file is smaller than 25 MB. The contents are deliberately separated into
+reusable inputs, small examples, and external data that users must supply:
+
+| Path | Included | Purpose |
+|---|---:|---|
+| `data/example/boundary.zip` | Yes | Streamlit-ready example basin-boundary Shapefile archive |
+| `data/example/outlets.zip` | Yes | Streamlit-ready example outlet-point Shapefile archive |
+| `data/boundary/`, `data/outlets/` | Yes | Expanded case-study boundary and outlet GIS layers |
+| `data/lucc/` | Yes | Arc/Info land-cover grid used by vegetation parameter generation |
+| `data/soil/` | Yes | USDA upper- and lower-soil grids and their support files |
+| `data/static/soil/`, `data/static/vegetation/` | Yes | Soil-property lookup table and vegetation root-fraction parameters |
+| `data/static/UH.all`, `data/static/veglib.LDAS` | Yes | Routing unit hydrograph and VIC vegetation library |
+| `data/static/observation.csv` | Yes | Small observed-flow input used by the calibration interface |
+| `data/input/` | Yes | Portable `chanliu_input.txt` and `rout_input.txt` templates |
+| `data/fraction/fraction_sample.txt` | Yes | Format example only; not a generated case result |
+| `data/static/dem/cndemalb30.tif` | No | External DEM required by elevation and flow generation |
+| `data/forcing/CMADS1.1.*` | No | External CMADS station/index Shapefile and its companion files |
+| `data/static/meteo/` | No | External precipitation, temperature, and wind station time series |
+
+The two archives in `data/example/` each contain one complete Shapefile and can
+be uploaded directly in the **Automatic construction** tab. They provide the
+user-supplied basin geometry, but they do not replace the DEM and meteorological
+inputs listed as external above. The forcing module expects station series under
+`data/static/meteo/pcp_data_vic/`, `temp_data_vic/`, and `wind_data_vic/`.
+
+No `runs/`, shared `output/`, calibration history, routed discharge, flux files,
+publication figures, or other simulation results are committed. A clean clone
+therefore cannot reproduce the reported numerical evidence until the omitted
+licensed/large inputs are supplied and the baseline `web_demo` run is rebuilt.
+All newly generated products remain under `runs/<run_id>/` or
+`report_assets/figures/` and should remain untracked.
+
+## Bundled MPI-VIC runtime
 
 `runtime/linux-x86_64/` contains the exact executable pair called by
 `vic_auto_modeling.vic_runner`: `MAC_MPI_VIC.X` and its direct `$ORIGIN`
@@ -43,7 +78,33 @@ the target host with `ldd runtime/linux-x86_64/MAC_MPI_VIC.X`. The bundled
 runtime retains the licensing terms of its upstream components and is not
 covered by claims about portability to other platforms or MPI ABIs.
 
-The scientific-decision experiment calls an OpenAI-compatible internal endpoint. Supply the credential through the environment; do not place it in source files:
+At execution time, `run_vic_model()` copies both files into
+`runs/<run_id>/output/model/`, localizes the routing inputs, and starts:
+
+```bash
+mpirun -np <processes> ./MAC_MPI_VIC.X -g chanliu_input.txt <six VIC parameters>
+```
+
+`MAC_MPI_VIC.X` locates `rout.so` in the same directory through its `$ORIGIN`
+runtime search path. The Python `requirements.txt` does not install system MPI
+libraries. Verify the host and the bundled files before a model run:
+
+```bash
+mpirun --version
+ldd "$VIC_SOURCE_DIR/MAC_MPI_VIC.X"
+sha256sum "$VIC_SOURCE_DIR/MAC_MPI_VIC.X" "$VIC_SOURCE_DIR/rout.so"
+test -x "$VIC_SOURCE_DIR/MAC_MPI_VIC.X"
+```
+
+The Streamlit sidebar reads `VIC_SOURCE_DIR` as its default **VIC runtime
+directory**. The same setting is used by the confirmation-gated agent actions.
+Users on another operating system, CPU architecture, OpenMPI ABI, or GNU Fortran
+ABI must rebuild MPI-VIC and point `VIC_SOURCE_DIR` to the resulting directory.
+
+## Optional LLM configuration
+
+The scientific-decision experiment calls an OpenAI-compatible endpoint. Supply
+the credential through the environment; do not place it in source files:
 
 ```bash
 export VIC_AGENT_API_KEY='<your-key>'
