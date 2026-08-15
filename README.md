@@ -11,7 +11,37 @@ cd /yourpath/vic_auto_modeling
 conda run -n hydrolib python --version
 ```
 
-The verified environment is `hydrolib`. Model executions use the MPI-VIC source tree at `/yourpath/MPI-VIC` and the archived baseline run `runs/web_demo`. Generated experiment artifacts remain isolated under `runs/<run_id>/`; publication graphics and their compact evidence records are written to `report_assets/figures/`.
+The public repository uses a `src/` layout. Make the packaged modules available
+to the command-line scripts and the Streamlit application before running them:
+
+```bash
+export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
+export VIC_SOURCE_DIR="$PWD/runtime/linux-x86_64"
+```
+
+The verified environment is `hydrolib`. Model executions use the bundled
+Linux x86-64 MPI-VIC runtime and a locally reconstructed baseline run named
+`web_demo`. Generated experiment artifacts remain isolated under
+`runs/<run_id>/`; publication graphics and their compact evidence records are
+written to `report_assets/figures/`.
+
+### Bundled MPI-VIC runtime
+
+`runtime/linux-x86_64/` contains the exact executable pair called by
+`vic_auto_modeling.vic_runner`: `MAC_MPI_VIC.X` and its direct `$ORIGIN`
+dependency `rout.so`. Their SHA-256 digests are:
+
+```text
+fc78fc2217b9a6b7b162d37ec1d31a1dafd83ecac5765058459eae034d9d1f95  MAC_MPI_VIC.X
+5d1217d8cff731c155eafc34b637d5c2b8588f9c58c7ef2b7534499e8d17b473  rout.so
+```
+
+The binaries require a compatible Linux x86-64 system with OpenMPI
+(`libmpi.so.40`), GNU Fortran runtime (`libgfortran.so.5`), and standard glibc
+libraries. These operating-system libraries are not vendored. Check linkage on
+the target host with `ldd runtime/linux-x86_64/MAC_MPI_VIC.X`. The bundled
+runtime retains the licensing terms of its upstream components and is not
+covered by claims about portability to other platforms or MPI ABIs.
 
 The scientific-decision experiment calls an OpenAI-compatible internal endpoint. Supply the credential through the environment; do not place it in source files:
 
@@ -25,10 +55,10 @@ export VIC_AGENT_MODEL='<your-model>'
 
 | Manuscript contribution | Publication asset | Generating script | Primary machine-readable evidence |
 |---|---|---|---|
-| Deterministic model construction | `deterministic_model_construction.png` | `scripts/report/create_deterministic_construction_figure.py` | `report_assets/figures/deterministic_model_construction_evidence.json` |
-| Run-level semantic assurance | `run_level_lineage_assurance.png` | `scripts/report/run_lineage_assurance_experiment.py`; `scripts/report/create_lineage_assurance_figure.py` | `runs/lineage_demo/output/lineage_audit/lineage_audit.json` |
-| Evidence-grounded fault diagnosis | `table2_fault_diagnosis.png` | `scripts/report/run_fault_diagnosis_experiment.py`; `scripts/report/create_fault_diagnosis_table.py` | `runs/diagnosis_demo/output/diagnosis_audit/diagnosis_summary.json` |
-| Human-supervised scientific decision | `human_supervised_scientific_decision.png` | `scripts/report/run_scientific_decision_experiment.py`; `scripts/report/run_approved_scientific_experiments.py`; aggregation and figure scripts | `runs/decision_demo/output/decision_audit/scientific_experiment_execution_audit.json` |
+| Deterministic model construction | `deterministic_model_construction.png` | `src/scripts/report/create_deterministic_construction_figure.py` | `report_assets/figures/deterministic_model_construction_evidence.json` |
+| Run-level semantic assurance | `run_level_lineage_assurance.png` | `src/scripts/report/run_lineage_assurance_experiment.py`; `src/scripts/report/create_lineage_assurance_figure.py` | `runs/lineage_demo/output/lineage_audit/lineage_audit.json` |
+| Evidence-grounded fault diagnosis | `table2_fault_diagnosis.png` | `src/scripts/report/run_fault_diagnosis_experiment.py`; `src/scripts/report/create_fault_diagnosis_table.py` | `runs/diagnosis_demo/output/diagnosis_audit/diagnosis_summary.json` |
+| Human-supervised scientific decision | `human_supervised_scientific_decision.png` | `src/scripts/report/run_scientific_decision_experiment.py`; `src/scripts/report/run_approved_scientific_experiments.py`; aggregation and figure scripts | `runs/decision_demo/output/decision_audit/scientific_experiment_execution_audit.json` |
 
 Each figure also has a PDF version and a `*_evidence.json` sidecar in `report_assets/figures/`. The sidecar records the displayed values and, where applicable, the SHA-256 digest of its source audit.
 
@@ -47,16 +77,16 @@ The figure audits the archived `web_demo` run across four linked checks:
 3. routing topology and outlet connectivity; and
 4. successful VIC/routing execution and the expected daily, monthly, and 12-month climatological output lengths.
 
-The underlying deterministic workflow is documented in `docs/workflow.md`. Its construction entry points are, in order:
+The deterministic construction entry points are, in order:
 
 ```bash
-conda run -n hydrolib python scripts/grid/create_fishnet.py
-conda run -n hydrolib python scripts/veg/create_veg_param.py
-conda run -n hydrolib python scripts/elevation/create_average_elevation.py
-conda run -n hydrolib python scripts/soil/create_soil_majority.py
-conda run -n hydrolib python scripts/forcing/create_forcing.py
-conda run -n hydrolib python scripts/flow/create_flow.py
-conda run -n hydrolib python scripts/model/create_model_inputs.py
+conda run -n hydrolib python src/scripts/grid/create_fishnet.py
+conda run -n hydrolib python src/scripts/veg/create_veg_param.py
+conda run -n hydrolib python src/scripts/elevation/create_average_elevation.py
+conda run -n hydrolib python src/scripts/soil/create_soil_majority.py
+conda run -n hydrolib python src/scripts/forcing/create_forcing.py
+conda run -n hydrolib python src/scripts/flow/create_flow.py
+conda run -n hydrolib python src/scripts/model/create_model_inputs.py
 ```
 
 These commands rebuild the shared `output/` workflow. The publication evidence intentionally reads the immutable `runs/web_demo` snapshot so that figure regeneration does not alter its source data.
@@ -64,7 +94,7 @@ These commands rebuild the shared `output/` workflow. The publication evidence i
 ### Reproduce the figure
 
 ```bash
-conda run -n hydrolib python scripts/report/create_deterministic_construction_figure.py \
+conda run -n hydrolib python src/scripts/report/create_deterministic_construction_figure.py \
   --run-id web_demo \
   --output-dir report_assets/figures
 ```
@@ -86,13 +116,13 @@ The source calibration contains 100 evaluations. The retained shared output is c
 ### Reproduce the experiment and figure
 
 ```bash
-conda run -n hydrolib python scripts/report/run_lineage_assurance_experiment.py \
+conda run -n hydrolib python src/scripts/report/run_lineage_assurance_experiment.py \
   --source-run-id web_demo \
   --experiment-run-id lineage_demo \
-  --source-dir /yourpath/MPI-VIC \
+  --source-dir "$VIC_SOURCE_DIR" \
   --processes 12
 
-conda run -n hydrolib python scripts/report/create_lineage_assurance_figure.py \
+conda run -n hydrolib python src/scripts/report/create_lineage_assurance_figure.py \
   --run-id web_demo \
   --experiment-run-id lineage_demo \
   --output-prefix report_assets/figures/run_level_lineage_assurance
@@ -122,13 +152,13 @@ For each case, the experiment first records the observed runtime evidence. A det
 ### Reproduce the experiment and table
 
 ```bash
-conda run -n hydrolib python scripts/report/run_fault_diagnosis_experiment.py \
+conda run -n hydrolib python src/scripts/report/run_fault_diagnosis_experiment.py \
   --run-id diagnosis_demo \
   --source-run-id web_demo \
-  --source-dir /yourpath/MPI-VIC \
+  --source-dir "$VIC_SOURCE_DIR" \
   --processes 12
 
-conda run -n hydrolib python scripts/report/create_fault_diagnosis_table.py \
+conda run -n hydrolib python src/scripts/report/create_fault_diagnosis_table.py \
   --run-id diagnosis_demo \
   --output-dir report_assets/figures
 ```
@@ -156,7 +186,7 @@ For LLM selection, each case is repeated three times with reordered candidate de
 ### Reproduce the decision records
 
 ```bash
-conda run -n hydrolib python scripts/report/run_scientific_decision_experiment.py \
+conda run -n hydrolib python src/scripts/report/run_scientific_decision_experiment.py \
   --run-id decision_demo \
   --source-run-id web_demo \
   --lineage-run-id lineage_demo \
@@ -167,7 +197,7 @@ conda run -n hydrolib python scripts/report/run_scientific_decision_experiment.p
 The command writes `pending_decisions.json`, including a new confirmation token for each case. Review the proposed experiment and record one explicit decision per token:
 
 ```bash
-conda run -n hydrolib python scripts/report/review_scientific_decisions.py \
+conda run -n hydrolib python src/scripts/report/review_scientific_decisions.py \
   --run-id decision_demo --case-id S1 --token '<S1-token>' --decision approve \
   --reviewer-note 'Approved by the human modeller.'
 ```
@@ -179,24 +209,24 @@ Repeat the review command for S2 and S3 with their own tokens. The currently pub
 The published results were executed in three isolated run directories. The commands are safe to rerun because completed parameter simulations are cached by parameter hash:
 
 ```bash
-conda run -n hydrolib python scripts/report/run_approved_scientific_experiments.py \
+conda run -n hydrolib python src/scripts/report/run_approved_scientific_experiments.py \
   --experiment S1 --execution-run-id decision_execution_demo \
-  --source-dir /yourpath/MPI-VIC --processes 12
+  --source-dir "$VIC_SOURCE_DIR" --processes 12
 
-conda run -n hydrolib python scripts/report/run_approved_scientific_experiments.py \
+conda run -n hydrolib python src/scripts/report/run_approved_scientific_experiments.py \
   --experiment S2 --execution-run-id decision_execution_s2 \
-  --source-dir /yourpath/MPI-VIC --processes 12
+  --source-dir "$VIC_SOURCE_DIR" --processes 12
 
-conda run -n hydrolib python scripts/report/run_approved_scientific_experiments.py \
+conda run -n hydrolib python src/scripts/report/run_approved_scientific_experiments.py \
   --experiment S3 --execution-run-id decision_execution_s3 \
-  --source-dir /yourpath/MPI-VIC --processes 12
+  --source-dir "$VIC_SOURCE_DIR" --processes 12
 ```
 
 Validate the three designs, bind their result paths back to the reviewed decisions, and render the final figure:
 
 ```bash
-conda run -n hydrolib python scripts/report/aggregate_scientific_experiment_evidence.py
-conda run -n hydrolib python scripts/report/create_scientific_decision_figure.py \
+conda run -n hydrolib python src/scripts/report/aggregate_scientific_experiment_evidence.py
+conda run -n hydrolib python src/scripts/report/create_scientific_decision_figure.py \
   --run-id decision_demo \
   --output-dir report_assets/figures
 ```
@@ -212,6 +242,32 @@ The LLM matched the prespecified choice in 9/9 reordered-candidate trials, groun
 Together, these cases support the contribution at the demonstrated scope: the system converts evidence into a discriminating, human-authorized experiment and executes it through deterministic VIC tools. General claims about decision superiority require additional basins, larger search budgets, independent experts, and unseen or compound decision cases.
 
 The S1--S3 approval path is an experiment-specific reproducibility protocol. It is intentionally separate from the generic LangGraph pending-action branch used by the interactive application for automatic construction, VIC execution, and calibration. The `scientific_decision` LangGraph node does not silently rerun S1--S3; it verifies their source-run identity, approval status, completion event, and result availability, and then writes the reviewed decision and scientific result to `VicAgentState`.
+
+## Streamlit interface
+
+The repository includes the same four-tab interface used by the implementation:
+automatic construction, VIC execution, calibration, and the agent assistant. The
+assistant loads the selected run state before reasoning, exposes the four
+contribution-specific scientific nodes through natural-language queries, and
+requires explicit confirmation before a state-changing job can start.
+
+Configure the optional LLM endpoint as described above, then launch the interface:
+
+```bash
+export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
+export VIC_SOURCE_DIR="$PWD/runtime/linux-x86_64"
+conda run -n hydrolib streamlit run web_app/app.py \
+  --server.address 0.0.0.0 \
+  --server.port 8502 \
+  --server.headless true \
+  --browser.gatherUsageStats false
+```
+
+The repository intentionally contains no `runs/`, `output/`, or publication
+result files. Consequently, a fresh interface starts without completed run
+evidence; users must execute or reconstruct the selected experiment locally.
+Large DEM and meteorological inputs and the external MPI-VIC binaries are also
+not distributed in this repository.
 
 ## Code--evidence alignment safeguards
 
@@ -237,11 +293,10 @@ conda run -n hydrolib python -m unittest tests/test_agent_scientific_nodes.py -v
 The following checks regenerate all four display assets from their audits and validate the reporting scripts without rerunning VIC:
 
 ```bash
-conda run -n hydrolib python scripts/report/create_deterministic_construction_figure.py --run-id web_demo
-conda run -n hydrolib python scripts/report/create_lineage_assurance_figure.py --run-id web_demo --experiment-run-id lineage_demo --output-prefix report_assets/figures/run_level_lineage_assurance
-conda run -n hydrolib python scripts/report/create_fault_diagnosis_table.py --run-id diagnosis_demo
-conda run -n hydrolib python scripts/report/aggregate_scientific_experiment_evidence.py
-conda run -n hydrolib python scripts/report/create_scientific_decision_figure.py --run-id decision_demo
-conda run -n hydrolib python scripts/report/create_core_mechanism_figure.py
-conda run -n hydrolib python -m py_compile scripts/report/*.py
+conda run -n hydrolib python src/scripts/report/create_deterministic_construction_figure.py --run-id web_demo
+conda run -n hydrolib python src/scripts/report/create_lineage_assurance_figure.py --run-id web_demo --experiment-run-id lineage_demo --output-prefix report_assets/figures/run_level_lineage_assurance
+conda run -n hydrolib python src/scripts/report/create_fault_diagnosis_table.py --run-id diagnosis_demo
+conda run -n hydrolib python src/scripts/report/aggregate_scientific_experiment_evidence.py
+conda run -n hydrolib python src/scripts/report/create_scientific_decision_figure.py --run-id decision_demo
+conda run -n hydrolib python -m py_compile src/scripts/report/*.py
 ```
