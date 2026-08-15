@@ -1,0 +1,4 @@
+Projection    GEOGRAPHIC
+Units         DD
+Zunits        NO
+Parameters    6378140.0  6356755.288157528

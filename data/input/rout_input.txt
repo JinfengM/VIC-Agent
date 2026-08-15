@@ -1,0 +1,27 @@
+# Sample Routing Information File; RCSID: $Id: input.sample,v 1.2 2006/08/26 01:26:56 vicadmin Exp $
+# NAME OF FLOW DIRECTION FILE,流向文件，1-8方向
+data/generated/flow/flow_1_8.txt
+# NAME OF VELOCITY FILE
+.false.
+1.50
+# NAME OF DIFF FILE
+.false.
+800
+# NAME OF XMASK FILE
+.true.
+data/generated/flow/output_area_mask.txt
+# NAME OF FRACTION FILE
+.true.
+data/fraction/fraction_sample.txt
+# NAME OF STATION FILE
+data/generated/flow/area_stnloc.txt
+# PATH OF INPUT FILES AND PRECISION
+runs/example/output/model/chanliu_result/fluxes_
+4
+# PATH OF OUTPUT FILES
+runs/example/output/model/chanliu_result/
+# YEAR AND MONTH OF MODEL OUTPUT TO ROUTE & ROUTED OUTPUT TO WRITE
+2008 01 2016 12
+2008 01 2016 12
+# NAME OF UNIT HYDROGRAPH FILE
+data/static/UH.all
