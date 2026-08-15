@@ -1,4 +1,4 @@
-# VIC Auto Modeling evidence reproduction
+# VIC-Agent: Auto Modeling evidence reproduction
 
 This repository accompanies the four evidence products used to support the manuscript contributions. Each figure is generated from a machine-readable audit artifact rather than manually entered values. The experiments below were run for the Luanhe case study; their purpose is to test the software claims under controlled conditions, not to establish universal hydrological performance.
 
